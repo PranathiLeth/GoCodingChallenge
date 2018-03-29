@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"strconv"
 
 	"github.com/julienschmidt/httprouter"
 )
@@ -13,10 +14,10 @@ import (
 // Create will allow a user to create a new todo
 // The supported body is {"title": "", "status": ""}
 func Create(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	dbUser := os.Getenv("DB_USER")
-	dbHost := os.Getenv("DB_HOST")
-	dbPassword := os.Getenv("DB_PASSWORD")
-	dbName := os.Getenv("DB_NAME")
+	dbUser := os.Getenv("Admin")
+	dbHost := os.Getenv("LAPTOP-PIA8TBSK")
+	dbPassword := os.Getenv("Admin")
+	dbName := os.Getenv("ToDo")
 
 	dbinfo := fmt.Sprintf("host=%s user=%s password=%s dbname=%s sslmode=disable", dbHost, dbUser, dbPassword, dbName)
 	db, err := sql.Open("postgres", dbinfo)
@@ -66,10 +67,10 @@ func Create(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 
 // List will provide a list of all current to-dos
 func List(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	dbUser := os.Getenv("DB_USER")
-	dbHost := os.Getenv("DB_HOST")
-	dbPassword := os.Getenv("DB_PASSWORD")
-	dbName := os.Getenv("DB_NAME")
+	dbUser := os.Getenv("Admin")
+	dbHost := os.Getenv("LAPTOP-PIA8TBSK")
+	dbPassword := os.Getenv("Admin")
+	dbName := os.Getenv("ToDo")
 
 	dbinfo := fmt.Sprintf("host=%s user=%s password=%s dbname=%s sslmode=disable", dbHost, dbUser, dbPassword, dbName)
 	db, err := sql.Open("postgres", dbinfo)
@@ -93,6 +94,54 @@ func List(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	}
 
 	jsonResp, _ := json.Marshal(Todos{TodoList: todoList})
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	fmt.Fprintf(w, string(jsonResp))
+}
+
+//update API to update a todo based on id
+
+func Update(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+	dbUser := os.Getenv("Admin")
+	dbHost := os.Getenv("LAPTOP-PIA8TBSK")
+	dbPassword := os.Getenv("Admin")
+	dbName := os.Getenv("ToDo")
+
+	dbinfo := fmt.Sprintf("host=%s user=%s password=%s dbname=%s sslmode=disable", dbHost, dbUser, dbPassword, dbName)
+	db, err := sql.Open("postgres", dbinfo)
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+
+	id, err := strconv.Atoi(p.ByName("id"))
+	if err != nil {
+		fmt.Print(err.Error())
+		return
+	}
+
+	var todo UpdateTodo
+
+	json.NewDecoder(r.Body).Decode(&todo)
+
+	row, err := db.QueryRow("SELECT title, status FROM todo WHERE id=$1", id)
+	if err != nil {
+		fmt.Print(err.Error())
+	}
+
+	_, err = db.Exec("UPDATE todo SET Title = ?, Status = ? WHERE Id = ?", todo.Title, todo.Status, id)
+
+	if err != nil {
+		fmt.Println("ERROR saving to db - ", err)
+	}
+
+	newTodo := Todo{}
+	err = db.QueryRow("SELECT  Title, Status FROM Todo WHERE Id=?", newTodo.ID).Scan(&newTodo.Title, &newTodo.Status)
+	if err != nil {
+		fmt.Println("ERROR reading from db - ", err)
+	}
+
+	jsonResp, _ := json.Marshal(newTodo)
+
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(200)
 	fmt.Fprintf(w, string(jsonResp))

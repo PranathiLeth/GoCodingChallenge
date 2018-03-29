@@ -19,3 +19,10 @@ type CreateTodo struct {
 	Title  string `json:"title"`
 	Status string `json:"status"`
 }
+
+//UpdateTodo is the expected payload for a update todo request
+type UpdateTodo struct {
+	ID     int    `json:"id"`
+	Title  string `json:"title"`
+	Status string `json:"status"`
+}

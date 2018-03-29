@@ -6,9 +6,10 @@ import (
 	"net/http"
 
 	"github.com/julienschmidt/httprouter"
-	_ "github.com/lib/pq"
+	"github.com/gorilla/mux"
+	 _ "github.com/lib/pq"
+	"github.com/PranathiLeth/GoCodingChallenge/todo"
 
-	"github.com/rackerlabs/GoCodingChallenge/todo"
 )
 
 // Status :=
@@ -23,10 +24,10 @@ func main() {
 	router.GET("/", Status)
 	router.POST("/todos", todo.Create)
 	router.GET("/todos", todo.List)
+	router.PUT("/todos/{todoID}", todo.Update)
 
 	log.Println("Starting server...")
 
-	// Make sure you have DB_USER, DB_PASSWORD and DB_NAME environment variables set.
-	// We use them elsewhere
+
 	log.Fatal(http.ListenAndServe(":8080", router))
 }
